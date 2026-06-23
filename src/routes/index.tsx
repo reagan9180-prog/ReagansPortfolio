@@ -87,11 +87,11 @@ function Header() {
         </nav>
         <div className="flex items-center gap-2">
           <button
-            onClick={ctx?.toggle}
+            onClick={toggleTheme}
             aria-label="Toggle theme"
             className="rounded-sm border border-border p-2 text-muted-foreground transition hover:text-foreground"
           >
-            {ctx?.dark ? <SunIcon /> : <MoonIcon />}
+            {dark ? <SunIcon /> : <MoonIcon />}
           </button>
           <button
             onClick={() => setOpen((o) => !o)}

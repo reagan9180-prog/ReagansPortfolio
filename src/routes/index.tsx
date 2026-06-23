@@ -43,7 +43,16 @@ function Home() {
 }
 
 function Header() {
-  const ctx = (useRouteContext({ from: "__root__" }) as unknown) as { dark: boolean; toggle: () => void } | undefined;
+  const [dark, setDark] = useState(false);
+  useEffect(() => {
+    setDark(document.documentElement.classList.contains("dark"));
+  }, []);
+  const toggleTheme = () => {
+    const next = !document.documentElement.classList.contains("dark");
+    document.documentElement.classList.toggle("dark", next);
+    window.localStorage.setItem("theme", next ? "dark" : "light");
+    setDark(next);
+  };
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 

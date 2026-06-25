@@ -71,7 +71,7 @@ function Header() {
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <a href="#top" className="flex items-center gap-2 font-mono text-sm font-medium">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-accent" />
+          <span className="relative inline-flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-pulse-glow rounded-full bg-accent" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent" /></span>
           <span>portfolio<span className="text-muted-foreground">.ie</span></span>
         </a>
         <nav className="hidden items-center gap-7 md:flex">

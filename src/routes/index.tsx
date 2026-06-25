@@ -28,10 +28,17 @@ const NAV = [
 ];
 
 function Home() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="relative min-h-screen text-foreground">
+      {mounted && (
+        <Suspense fallback={null}>
+          <ChipBackground />
+        </Suspense>
+      )}
       <Header />
-      <main>
+      <main className="relative">
         <Hero />
         <About />
         <Academics />

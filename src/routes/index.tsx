@@ -71,7 +71,7 @@ function Header() {
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <a href="#top" className="flex items-center gap-2 font-mono text-sm font-medium">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-accent" />
+          <span className="relative inline-flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-pulse-glow rounded-full bg-accent" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent" /></span>
           <span>portfolio<span className="text-muted-foreground">.ie</span></span>
         </a>
         <nav className="hidden items-center gap-7 md:flex">
@@ -128,9 +128,9 @@ function Hero() {
       <div className="absolute inset-0 grid-bg opacity-60" aria-hidden />
       <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-20 md:pb-32 md:pt-28">
         <p className="eyebrow animate-fade-up">TUM Applicant · Information Engineering · Class of 2027</p>
-        <h1 className="mt-5 max-w-4xl font-serif text-5xl leading-[1.05] tracking-tight md:text-7xl animate-fade-up">
+        <h1 className="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl animate-fade-up">
           Aspiring Information<br />
-          <span className="text-muted-foreground">Engineer.</span>
+          <span className="text-accent text-glow">Engineer.</span>
         </h1>
         <p className="mt-6 max-w-2xl text-base text-muted-foreground md:text-lg animate-fade-up">
           A Grade 12 student from Indonesia building software, learning systems, and

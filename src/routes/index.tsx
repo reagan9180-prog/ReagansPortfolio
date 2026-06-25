@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+
+const ChipBackground = lazy(() =>
+  import("@/components/ChipBackground").then((m) => ({ default: m.ChipBackground })),
+);
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,10 +28,17 @@ const NAV = [
 ];
 
 function Home() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="relative min-h-screen text-foreground">
+      {mounted && (
+        <Suspense fallback={null}>
+          <ChipBackground />
+        </Suspense>
+      )}
       <Header />
-      <main>
+      <main className="relative">
         <Hero />
         <About />
         <Academics />

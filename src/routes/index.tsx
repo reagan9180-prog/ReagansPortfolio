@@ -240,7 +240,7 @@ function Academics() {
   const subjects = ["Mathematics", "Physics", "Programming (Elective)", "English"];
   const langs = [
     { lang: "Indonesian", level: "Native", pct: 100 },
-    { lang: "English", level: "C1 — Advanced", pct: 88 },
+    { lang: "English", level: "Intermediate", pct: 88 },
     { lang: "German", level: "A1 — In progress", pct: 22 },
   ];
   return (

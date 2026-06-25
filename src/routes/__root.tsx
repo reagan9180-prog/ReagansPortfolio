@@ -105,8 +105,7 @@ function RootComponent() {
 
   useEffect(() => {
     const stored = typeof window !== "undefined" ? window.localStorage.getItem("theme") : null;
-    const prefers = typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const isDark = stored ? stored === "dark" : prefers;
+    const isDark = stored ? stored === "dark" : true;
     document.documentElement.classList.toggle("dark", isDark);
   }, []);
 

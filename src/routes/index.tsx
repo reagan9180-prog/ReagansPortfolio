@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+
+const ChipBackground = lazy(() =>
+  import("@/components/ChipBackground").then((m) => ({ default: m.ChipBackground })),
+);
 
 export const Route = createFileRoute("/")({
   head: () => ({

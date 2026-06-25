@@ -128,9 +128,9 @@ function Hero() {
       <div className="absolute inset-0 grid-bg opacity-60" aria-hidden />
       <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-20 md:pb-32 md:pt-28">
         <p className="eyebrow animate-fade-up">TUM Applicant · Information Engineering · Class of 2027</p>
-        <h1 className="mt-5 max-w-4xl font-serif text-5xl leading-[1.05] tracking-tight md:text-7xl animate-fade-up">
+        <h1 className="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl animate-fade-up">
           Aspiring Information<br />
-          <span className="text-muted-foreground">Engineer.</span>
+          <span className="text-accent text-glow">Engineer.</span>
         </h1>
         <p className="mt-6 max-w-2xl text-base text-muted-foreground md:text-lg animate-fade-up">
           A Grade 12 student from Indonesia building software, learning systems, and

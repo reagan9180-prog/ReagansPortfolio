@@ -89,12 +89,25 @@ function QFPChip({
   return (
     <group position={position}>
       <mesh geometry={body} castShadow receiveShadow>
-        <meshStandardMaterial color={SILICON} metalness={0.5} roughness={0.55} />
+        <meshPhysicalMaterial
+          color={SILICON}
+          metalness={0.55}
+          roughness={0.45}
+          clearcoat={0.6}
+          clearcoatRoughness={0.25}
+          reflectivity={0.5}
+        />
       </mesh>
       {/* top etched surface */}
       <mesh position={[0, 0.046, 0]}>
         <boxGeometry args={[size * 0.92, 0.004, size * 0.92]} />
-        <meshStandardMaterial color="#141a2a" metalness={0.35} roughness={0.7} />
+        <meshPhysicalMaterial
+          color="#141a2a"
+          metalness={0.4}
+          roughness={0.6}
+          clearcoat={0.4}
+          clearcoatRoughness={0.4}
+        />
       </mesh>
       {/* pin-1 dot */}
       <mesh position={[-size * 0.38, 0.05, -size * 0.38]}>
@@ -105,7 +118,7 @@ function QFPChip({
       {label && (
         <mesh position={[0, 0.05, 0]}>
           <boxGeometry args={[size * 0.5, 0.002, size * 0.08]} />
-          <meshStandardMaterial color="#9ca3af" roughness={0.9} />
+          <meshStandardMaterial color="#c4cad6" roughness={0.95} />
         </mesh>
       )}
       {/* optional glowing die */}

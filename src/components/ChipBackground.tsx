@@ -139,15 +139,15 @@ function QFPChip({
         <group key={i} position={pn.p} rotation={pn.r}>
           <mesh position={[0.035, 0, 0]} castShadow>
             <boxGeometry args={[0.07, 0.012, size * 0.05]} />
-            <meshStandardMaterial color={SOLDER} metalness={1} roughness={0.25} />
+            <meshPhysicalMaterial color={SOLDER} metalness={1} roughness={0.18} clearcoat={1} clearcoatRoughness={0.1} />
           </mesh>
           <mesh position={[0.078, -0.02, 0]} castShadow>
             <boxGeometry args={[0.015, 0.045, size * 0.05]} />
-            <meshStandardMaterial color={SOLDER} metalness={1} roughness={0.25} />
+            <meshPhysicalMaterial color={SOLDER} metalness={1} roughness={0.2} clearcoat={1} clearcoatRoughness={0.12} />
           </mesh>
           <mesh position={[0.105, -0.045, 0]} castShadow>
             <boxGeometry args={[0.06, 0.01, size * 0.05]} />
-            <meshStandardMaterial color="#cbd5e1" metalness={1} roughness={0.35} />
+            <meshPhysicalMaterial color="#cbd5e1" metalness={1} roughness={0.28} clearcoat={0.8} clearcoatRoughness={0.2} />
           </mesh>
         </group>
       ))}

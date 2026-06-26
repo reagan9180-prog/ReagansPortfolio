@@ -539,32 +539,70 @@ export function ChipBackground() {
         camera={{ position: [0.4, 2.1, 5.0], fov: 36 }}
         dpr={[1, 2]}
         shadows
-        gl={{ antialias: true, alpha: true }}
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: "high-performance",
+          stencil: false,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          outputColorSpace: THREE.SRGBColorSpace,
+        }}
       >
-        <color attach="background" args={["#060912"]} />
-        <fog attach="fog" args={["#060912", 6, 13]} />
-        <ambientLight intensity={0.32} />
+        <color attach="background" args={["#050810"]} />
+        <fog attach="fog" args={["#050810", 6, 13]} />
+        <ambientLight intensity={0.22} />
         <directionalLight
           position={[4, 6, 3]}
-          intensity={1.5}
+          intensity={1.6}
           color="#e0f7ff"
           castShadow
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
+          shadow-bias={-0.0002}
+          shadow-normalBias={0.02}
         />
-        <pointLight position={[-3.5, 2, -2]} intensity={1.6} color="#22d3ee" />
-        <pointLight position={[2.5, 1.2, 2]} intensity={0.9} color="#7dd3fc" />
-        <Environment preset="city" />
+        <pointLight position={[-3.5, 2, -2]} intensity={1.8} color="#22d3ee" distance={9} decay={2} />
+        <pointLight position={[2.5, 1.2, 2]} intensity={1.1} color="#7dd3fc" distance={8} decay={2} />
+        <pointLight position={[0, 1.8, 0]} intensity={0.6} color="#a5f3fc" distance={4} decay={2} />
+        <Environment preset="warehouse" environmentIntensity={0.65} />
         <Motherboard />
         <Particles />
         <ContactShadows
           position={[0, -0.65, 0]}
-          opacity={0.55}
-          scale={9}
-          blur={2.4}
-          far={3}
+          opacity={0.7}
+          scale={10}
+          blur={2.8}
+          far={3.5}
+          resolution={1024}
           color="#000000"
         />
+        <EffectComposer multisampling={0} enableNormalPass>
+          <SSAO
+            blendFunction={BlendFunction.MULTIPLY}
+            samples={16}
+            radius={0.08}
+            intensity={22}
+            luminanceInfluence={0.6}
+            worldDistanceThreshold={1}
+            worldDistanceFalloff={1}
+            worldProximityThreshold={1}
+            worldProximityFalloff={1}
+          />
+          <Bloom
+            intensity={0.85}
+            luminanceThreshold={0.55}
+            luminanceSmoothing={0.25}
+            mipmapBlur
+            kernelSize={KernelSize.LARGE}
+          />
+          <DepthOfField focusDistance={0.018} focalLength={0.045} bokehScale={2.2} />
+          <ChromaticAberration offset={[0.0006, 0.0009]} radialModulation modulationOffset={0.4} />
+          <HueSaturation saturation={0.08} />
+          <BrightnessContrast brightness={-0.02} contrast={0.12} />
+          <Vignette eskil={false} offset={0.25} darkness={0.85} />
+          <Noise opacity={0.035} premultiply blendFunction={BlendFunction.SCREEN} />
+          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+        </EffectComposer>
       </Canvas>
     </div>
   );

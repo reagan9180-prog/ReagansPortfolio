@@ -372,14 +372,23 @@ function Motherboard() {
 
   return (
     <group ref={group}>
-      {/* PCB substrate */}
+      {/* PCB substrate with solder-mask sheen */}
       <mesh geometry={board} castShadow receiveShadow>
-        <meshStandardMaterial color={PCB_GREEN} metalness={0.25} roughness={0.75} />
+        <meshPhysicalMaterial
+          color={PCB_GREEN}
+          metalness={0.15}
+          roughness={0.55}
+          clearcoat={1}
+          clearcoatRoughness={0.35}
+          sheen={0.4}
+          sheenColor={"#0a5a3a"}
+          sheenRoughness={0.6}
+        />
       </mesh>
       {/* darker inner layer for depth */}
       <mesh position={[0, 0.024, 0]}>
         <boxGeometry args={[3.32, 0.002, 2.32]} />
-        <meshStandardMaterial color={PCB_DARK} roughness={0.9} />
+        <meshPhysicalMaterial color={PCB_DARK} roughness={0.85} clearcoat={0.5} clearcoatRoughness={0.5} />
       </mesh>
 
       <Traces />

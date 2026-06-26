@@ -443,17 +443,25 @@ function Motherboard() {
         <meshStandardMaterial color="#0a0d18" roughness={0.8} />
       </mesh>
 
-      {/* Heatsink fins over CPU area (subtle) */}
+      {/* Heatsink fins over CPU area — brushed anisotropic aluminum */}
       <group position={[-0.3, 0.07, -0.1]}>
         {[-0.36, -0.24, -0.12, 0, 0.12, 0.24, 0.36].map((x) => (
           <mesh key={x} position={[x, 0.06, 0]} castShadow>
             <boxGeometry args={[0.04, 0.12, 0.9]} />
-            <meshStandardMaterial color="#94a3b8" metalness={0.95} roughness={0.35} />
+            <meshPhysicalMaterial
+              color="#b6c1cf"
+              metalness={1}
+              roughness={0.28}
+              anisotropy={0.8}
+              anisotropyRotation={Math.PI / 2}
+              clearcoat={0.4}
+              clearcoatRoughness={0.3}
+            />
           </mesh>
         ))}
         <mesh position={[0, 0.005, 0]}>
           <boxGeometry args={[0.95, 0.01, 0.95]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={1} roughness={0.3} />
+          <meshPhysicalMaterial color="#d7dde6" metalness={1} roughness={0.22} clearcoat={0.6} clearcoatRoughness={0.2} />
         </mesh>
       </group>
 

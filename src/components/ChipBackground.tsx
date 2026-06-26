@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, ContactShadows, AccumulativeShadows, RandomizedLight } from "@react-three/drei";
+import { Environment, ContactShadows } from "@react-three/drei";
 import {
   EffectComposer,
   Bloom,

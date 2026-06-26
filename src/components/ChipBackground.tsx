@@ -1,5 +1,18 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, ContactShadows } from "@react-three/drei";
+import {
+  EffectComposer,
+  Bloom,
+  SSAO,
+  ChromaticAberration,
+  Vignette,
+  Noise,
+  DepthOfField,
+  BrightnessContrast,
+  HueSaturation,
+  ToneMapping,
+} from "@react-three/postprocessing";
+import { BlendFunction, KernelSize, ToneMappingMode } from "postprocessing";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -76,12 +89,25 @@ function QFPChip({
   return (
     <group position={position}>
       <mesh geometry={body} castShadow receiveShadow>
-        <meshStandardMaterial color={SILICON} metalness={0.5} roughness={0.55} />
+        <meshPhysicalMaterial
+          color={SILICON}
+          metalness={0.55}
+          roughness={0.45}
+          clearcoat={0.6}
+          clearcoatRoughness={0.25}
+          reflectivity={0.5}
+        />
       </mesh>
       {/* top etched surface */}
       <mesh position={[0, 0.046, 0]}>
         <boxGeometry args={[size * 0.92, 0.004, size * 0.92]} />
-        <meshStandardMaterial color="#141a2a" metalness={0.35} roughness={0.7} />
+        <meshPhysicalMaterial
+          color="#141a2a"
+          metalness={0.4}
+          roughness={0.6}
+          clearcoat={0.4}
+          clearcoatRoughness={0.4}
+        />
       </mesh>
       {/* pin-1 dot */}
       <mesh position={[-size * 0.38, 0.05, -size * 0.38]}>
@@ -92,7 +118,7 @@ function QFPChip({
       {label && (
         <mesh position={[0, 0.05, 0]}>
           <boxGeometry args={[size * 0.5, 0.002, size * 0.08]} />
-          <meshStandardMaterial color="#9ca3af" roughness={0.9} />
+          <meshStandardMaterial color="#c4cad6" roughness={0.95} />
         </mesh>
       )}
       {/* optional glowing die */}
@@ -113,15 +139,15 @@ function QFPChip({
         <group key={i} position={pn.p} rotation={pn.r}>
           <mesh position={[0.035, 0, 0]} castShadow>
             <boxGeometry args={[0.07, 0.012, size * 0.05]} />
-            <meshStandardMaterial color={SOLDER} metalness={1} roughness={0.25} />
+            <meshPhysicalMaterial color={SOLDER} metalness={1} roughness={0.18} clearcoat={1} clearcoatRoughness={0.1} />
           </mesh>
           <mesh position={[0.078, -0.02, 0]} castShadow>
             <boxGeometry args={[0.015, 0.045, size * 0.05]} />
-            <meshStandardMaterial color={SOLDER} metalness={1} roughness={0.25} />
+            <meshPhysicalMaterial color={SOLDER} metalness={1} roughness={0.2} clearcoat={1} clearcoatRoughness={0.12} />
           </mesh>
           <mesh position={[0.105, -0.045, 0]} castShadow>
             <boxGeometry args={[0.06, 0.01, size * 0.05]} />
-            <meshStandardMaterial color="#cbd5e1" metalness={1} roughness={0.35} />
+            <meshPhysicalMaterial color="#cbd5e1" metalness={1} roughness={0.28} clearcoat={0.8} clearcoatRoughness={0.2} />
           </mesh>
         </group>
       ))}
@@ -145,7 +171,13 @@ function Capacitor({
     <group position={position}>
       <mesh position={[0, height / 2, 0]} castShadow>
         <cylinderGeometry args={[radius, radius, height, 28]} />
-        <meshStandardMaterial color={color} metalness={0.65} roughness={0.35} />
+        <meshPhysicalMaterial
+          color={color}
+          metalness={0.85}
+          roughness={0.28}
+          clearcoat={0.7}
+          clearcoatRoughness={0.25}
+        />
       </mesh>
       {/* top cross indent */}
       <mesh position={[0, height + 0.002, 0]}>
@@ -340,14 +372,23 @@ function Motherboard() {
 
   return (
     <group ref={group}>
-      {/* PCB substrate */}
+      {/* PCB substrate with solder-mask sheen */}
       <mesh geometry={board} castShadow receiveShadow>
-        <meshStandardMaterial color={PCB_GREEN} metalness={0.25} roughness={0.75} />
+        <meshPhysicalMaterial
+          color={PCB_GREEN}
+          metalness={0.15}
+          roughness={0.55}
+          clearcoat={1}
+          clearcoatRoughness={0.35}
+          sheen={0.4}
+          sheenColor={"#0a5a3a"}
+          sheenRoughness={0.6}
+        />
       </mesh>
       {/* darker inner layer for depth */}
       <mesh position={[0, 0.024, 0]}>
         <boxGeometry args={[3.32, 0.002, 2.32]} />
-        <meshStandardMaterial color={PCB_DARK} roughness={0.9} />
+        <meshPhysicalMaterial color={PCB_DARK} roughness={0.85} clearcoat={0.5} clearcoatRoughness={0.5} />
       </mesh>
 
       <Traces />
@@ -402,17 +443,25 @@ function Motherboard() {
         <meshStandardMaterial color="#0a0d18" roughness={0.8} />
       </mesh>
 
-      {/* Heatsink fins over CPU area (subtle) */}
+      {/* Heatsink fins over CPU area — brushed anisotropic aluminum */}
       <group position={[-0.3, 0.07, -0.1]}>
         {[-0.36, -0.24, -0.12, 0, 0.12, 0.24, 0.36].map((x) => (
           <mesh key={x} position={[x, 0.06, 0]} castShadow>
             <boxGeometry args={[0.04, 0.12, 0.9]} />
-            <meshStandardMaterial color="#94a3b8" metalness={0.95} roughness={0.35} />
+            <meshPhysicalMaterial
+              color="#b6c1cf"
+              metalness={1}
+              roughness={0.28}
+              anisotropy={0.8}
+              anisotropyRotation={Math.PI / 2}
+              clearcoat={0.4}
+              clearcoatRoughness={0.3}
+            />
           </mesh>
         ))}
         <mesh position={[0, 0.005, 0]}>
           <boxGeometry args={[0.95, 0.01, 0.95]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={1} roughness={0.3} />
+          <meshPhysicalMaterial color="#d7dde6" metalness={1} roughness={0.22} clearcoat={0.6} clearcoatRoughness={0.2} />
         </mesh>
       </group>
 
@@ -490,32 +539,70 @@ export function ChipBackground() {
         camera={{ position: [0.4, 2.1, 5.0], fov: 36 }}
         dpr={[1, 2]}
         shadows
-        gl={{ antialias: true, alpha: true }}
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: "high-performance",
+          stencil: false,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          outputColorSpace: THREE.SRGBColorSpace,
+        }}
       >
-        <color attach="background" args={["#060912"]} />
-        <fog attach="fog" args={["#060912", 6, 13]} />
-        <ambientLight intensity={0.32} />
+        <color attach="background" args={["#050810"]} />
+        <fog attach="fog" args={["#050810", 6, 13]} />
+        <ambientLight intensity={0.22} />
         <directionalLight
           position={[4, 6, 3]}
-          intensity={1.5}
+          intensity={1.6}
           color="#e0f7ff"
           castShadow
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
+          shadow-bias={-0.0002}
+          shadow-normalBias={0.02}
         />
-        <pointLight position={[-3.5, 2, -2]} intensity={1.6} color="#22d3ee" />
-        <pointLight position={[2.5, 1.2, 2]} intensity={0.9} color="#7dd3fc" />
-        <Environment preset="city" />
+        <pointLight position={[-3.5, 2, -2]} intensity={1.8} color="#22d3ee" distance={9} decay={2} />
+        <pointLight position={[2.5, 1.2, 2]} intensity={1.1} color="#7dd3fc" distance={8} decay={2} />
+        <pointLight position={[0, 1.8, 0]} intensity={0.6} color="#a5f3fc" distance={4} decay={2} />
+        <Environment preset="warehouse" environmentIntensity={0.65} />
         <Motherboard />
         <Particles />
         <ContactShadows
           position={[0, -0.65, 0]}
-          opacity={0.55}
-          scale={9}
-          blur={2.4}
-          far={3}
+          opacity={0.7}
+          scale={10}
+          blur={2.8}
+          far={3.5}
+          resolution={1024}
           color="#000000"
         />
+        <EffectComposer multisampling={0} enableNormalPass>
+          <SSAO
+            blendFunction={BlendFunction.MULTIPLY}
+            samples={16}
+            radius={0.08}
+            intensity={22}
+            luminanceInfluence={0.6}
+            worldDistanceThreshold={1}
+            worldDistanceFalloff={1}
+            worldProximityThreshold={1}
+            worldProximityFalloff={1}
+          />
+          <Bloom
+            intensity={0.85}
+            luminanceThreshold={0.55}
+            luminanceSmoothing={0.25}
+            mipmapBlur
+            kernelSize={KernelSize.LARGE}
+          />
+          <DepthOfField focusDistance={0.018} focalLength={0.045} bokehScale={2.2} />
+          <ChromaticAberration offset={[0.0006, 0.0009]} radialModulation modulationOffset={0.4} />
+          <HueSaturation saturation={0.08} />
+          <BrightnessContrast brightness={-0.02} contrast={0.12} />
+          <Vignette eskil={false} offset={0.25} darkness={0.85} />
+          <Noise opacity={0.035} premultiply blendFunction={BlendFunction.SCREEN} />
+          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+        </EffectComposer>
       </Canvas>
     </div>
   );

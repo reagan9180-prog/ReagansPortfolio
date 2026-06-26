@@ -1,16 +1,15 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment } from "@react-three/drei";
+import { Environment, ContactShadows } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-/* ---------- Reusable geometries / materials ---------- */
-
-function useBeveledBox(w: number, h: number, d: number, bevel = 0.04) {
+/* ---------------- Reusable rounded / beveled box ---------------- */
+function useBeveledBox(w: number, h: number, d: number, bevel = 0.02) {
   return useMemo(() => {
     const shape = new THREE.Shape();
     const x = w / 2;
     const z = d / 2;
-    const r = Math.min(bevel * 2, x, z);
+    const r = Math.min(bevel * 2, x * 0.9, z * 0.9);
     shape.moveTo(-x + r, -z);
     shape.lineTo(x - r, -z);
     shape.quadraticCurveTo(x, -z, x, -z + r);
@@ -25,8 +24,8 @@ function useBeveledBox(w: number, h: number, d: number, bevel = 0.04) {
       bevelEnabled: true,
       bevelSize: bevel,
       bevelThickness: bevel,
-      bevelSegments: 4,
-      curveSegments: 8,
+      bevelSegments: 3,
+      curveSegments: 6,
     });
     geo.rotateX(-Math.PI / 2);
     geo.translate(0, -bevel, 0);
@@ -34,46 +33,276 @@ function useBeveledBox(w: number, h: number, d: number, bevel = 0.04) {
   }, [w, h, d, bevel]);
 }
 
-/* ---------- A single QFP-style leg (gull-wing) ---------- */
-function Leg({
+/* ---------------- Materials ---------------- */
+const PCB_GREEN = "#0e3b2a";
+const PCB_DARK = "#082015";
+const SOLDER = "#d8e0ea";
+const GOLD = "#d4a85a";
+const SILICON = "#0a0d18";
+const ACCENT = "#22d3ee";
+
+/* ---------------- A QFP IC chip ---------------- */
+function QFPChip({
   position,
-  rotation,
+  size = 0.7,
+  label,
+  glow = false,
 }: {
   position: [number, number, number];
-  rotation: [number, number, number];
+  size?: number;
+  label?: string;
+  glow?: boolean;
+}) {
+  const body = useBeveledBox(size, 0.09, size, 0.015);
+  const dieRef = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame((_, dt) => {
+    if (glow && dieRef.current) {
+      dieRef.current.emissiveIntensity =
+        1.2 + Math.sin(performance.now() * 0.002) * 0.6;
+    }
+  });
+  const pinsPerSide = 10;
+  const sideLen = size * 0.78;
+  const step = sideLen / pinsPerSide;
+  const half = size / 2 + 0.005;
+  const pins: { p: [number, number, number]; r: [number, number, number] }[] = [];
+  for (let i = 0; i < pinsPerSide; i++) {
+    const o = -sideLen / 2 + step / 2 + i * step;
+    pins.push({ p: [half, -0.005, o], r: [0, 0, 0] });
+    pins.push({ p: [-half, -0.005, o], r: [0, Math.PI, 0] });
+    pins.push({ p: [o, -0.005, half], r: [0, -Math.PI / 2, 0] });
+    pins.push({ p: [o, -0.005, -half], r: [0, Math.PI / 2, 0] });
+  }
+  return (
+    <group position={position}>
+      <mesh geometry={body} castShadow receiveShadow>
+        <meshStandardMaterial color={SILICON} metalness={0.5} roughness={0.55} />
+      </mesh>
+      {/* top etched surface */}
+      <mesh position={[0, 0.046, 0]}>
+        <boxGeometry args={[size * 0.92, 0.004, size * 0.92]} />
+        <meshStandardMaterial color="#141a2a" metalness={0.35} roughness={0.7} />
+      </mesh>
+      {/* pin-1 dot */}
+      <mesh position={[-size * 0.38, 0.05, -size * 0.38]}>
+        <cylinderGeometry args={[size * 0.03, size * 0.03, 0.003, 20]} />
+        <meshStandardMaterial color="#e5e7eb" roughness={0.5} />
+      </mesh>
+      {/* label silkscreen line */}
+      {label && (
+        <mesh position={[0, 0.05, 0]}>
+          <boxGeometry args={[size * 0.5, 0.002, size * 0.08]} />
+          <meshStandardMaterial color="#9ca3af" roughness={0.9} />
+        </mesh>
+      )}
+      {/* optional glowing die */}
+      {glow && (
+        <mesh position={[0, 0.053, 0]}>
+          <boxGeometry args={[size * 0.32, 0.001, size * 0.32]} />
+          <meshStandardMaterial
+            ref={dieRef}
+            color={ACCENT}
+            emissive={ACCENT}
+            emissiveIntensity={1.4}
+            toneMapped={false}
+          />
+        </mesh>
+      )}
+      {/* pins */}
+      {pins.map((pn, i) => (
+        <group key={i} position={pn.p} rotation={pn.r}>
+          <mesh position={[0.035, 0, 0]} castShadow>
+            <boxGeometry args={[0.07, 0.012, size * 0.05]} />
+            <meshStandardMaterial color={SOLDER} metalness={1} roughness={0.25} />
+          </mesh>
+          <mesh position={[0.078, -0.02, 0]} castShadow>
+            <boxGeometry args={[0.015, 0.045, size * 0.05]} />
+            <meshStandardMaterial color={SOLDER} metalness={1} roughness={0.25} />
+          </mesh>
+          <mesh position={[0.105, -0.045, 0]} castShadow>
+            <boxGeometry args={[0.06, 0.01, size * 0.05]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={1} roughness={0.35} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+/* ---------------- Cylindrical capacitor ---------------- */
+function Capacitor({
+  position,
+  height = 0.32,
+  radius = 0.09,
+  color = "#1a1f3a",
+}: {
+  position: [number, number, number];
+  height?: number;
+  radius?: number;
+  color?: string;
 }) {
   return (
-    <group position={position} rotation={rotation}>
-      {/* horizontal exit from chip body */}
-      <mesh position={[0.05, 0, 0]} castShadow>
-        <boxGeometry args={[0.1, 0.02, 0.07]} />
-        <meshStandardMaterial color="#e2e8f0" metalness={1} roughness={0.22} />
+    <group position={position}>
+      <mesh position={[0, height / 2, 0]} castShadow>
+        <cylinderGeometry args={[radius, radius, height, 28]} />
+        <meshStandardMaterial color={color} metalness={0.65} roughness={0.35} />
       </mesh>
-      {/* downward bend */}
-      <mesh position={[0.11, -0.04, 0]} castShadow>
-        <boxGeometry args={[0.025, 0.1, 0.07]} />
-        <meshStandardMaterial color="#e2e8f0" metalness={1} roughness={0.22} />
+      {/* top cross indent */}
+      <mesh position={[0, height + 0.002, 0]}>
+        <cylinderGeometry args={[radius * 0.95, radius * 0.95, 0.005, 28]} />
+        <meshStandardMaterial color="#0a0d18" roughness={0.6} />
       </mesh>
-      {/* foot pad */}
-      <mesh position={[0.16, -0.085, 0]} castShadow>
-        <boxGeometry args={[0.13, 0.018, 0.07]} />
-        <meshStandardMaterial color="#cbd5e1" metalness={1} roughness={0.3} />
+      <mesh position={[0, height + 0.004, 0]}>
+        <boxGeometry args={[radius * 1.7, 0.003, 0.01]} />
+        <meshStandardMaterial color="#475569" />
+      </mesh>
+      <mesh position={[0, height + 0.004, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <boxGeometry args={[radius * 1.7, 0.003, 0.01]} />
+        <meshStandardMaterial color="#475569" />
+      </mesh>
+      {/* white stripe */}
+      <mesh position={[0, height * 0.65, 0]}>
+        <cylinderGeometry args={[radius + 0.001, radius + 0.001, height * 0.12, 28, 1, true]} />
+        <meshStandardMaterial color="#e5e7eb" roughness={0.7} side={THREE.DoubleSide} />
       </mesh>
     </group>
   );
 }
 
-/* ---------- The chip ---------- */
-function Chip() {
-  const group = useRef<THREE.Group>(null);
-  const dieGlow = useRef<THREE.MeshStandardMaterial>(null);
-  const [scrollY, setScrollY] = useState(0);
+/* ---------------- SMD resistor ---------------- */
+function Resistor({
+  position,
+  rotationY = 0,
+  color = "#0a0d18",
+}: {
+  position: [number, number, number];
+  rotationY?: number;
+  color?: string;
+}) {
+  return (
+    <group position={position} rotation={[0, rotationY, 0]}>
+      <mesh position={[0, 0.018, 0]} castShadow>
+        <boxGeometry args={[0.14, 0.035, 0.07]} />
+        <meshStandardMaterial color={color} roughness={0.7} />
+      </mesh>
+      <mesh position={[-0.072, 0.018, 0]} castShadow>
+        <boxGeometry args={[0.022, 0.04, 0.075]} />
+        <meshStandardMaterial color={SOLDER} metalness={1} roughness={0.3} />
+      </mesh>
+      <mesh position={[0.072, 0.018, 0]} castShadow>
+        <boxGeometry args={[0.022, 0.04, 0.075]} />
+        <meshStandardMaterial color={SOLDER} metalness={1} roughness={0.3} />
+      </mesh>
+    </group>
+  );
+}
 
+/* ---------------- LED ---------------- */
+function LED({
+  position,
+  color = "#22d3ee",
+}: {
+  position: [number, number, number];
+  color?: string;
+}) {
+  const ref = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame(() => {
+    if (ref.current) {
+      ref.current.emissiveIntensity = 1.5 + Math.sin(performance.now() * 0.004) * 0.8;
+    }
+  });
+  return (
+    <group position={position}>
+      <mesh position={[0, 0.015, 0]} castShadow>
+        <boxGeometry args={[0.08, 0.03, 0.05]} />
+        <meshStandardMaterial color="#0a0d18" roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 0.034, 0]}>
+        <boxGeometry args={[0.05, 0.008, 0.035]} />
+        <meshStandardMaterial
+          ref={ref}
+          color={color}
+          emissive={color}
+          emissiveIntensity={2}
+          toneMapped={false}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/* ---------------- DIMM / RAM slot with stick ---------------- */
+function RAMStick({ position }: { position: [number, number, number] }) {
+  const pcb = useBeveledBox(1.6, 0.04, 0.32, 0.008);
+  return (
+    <group position={position}>
+      <mesh geometry={pcb} castShadow receiveShadow>
+        <meshStandardMaterial color="#0a2a1d" metalness={0.3} roughness={0.7} />
+      </mesh>
+      {/* chips on RAM */}
+      {[-0.6, -0.3, 0, 0.3, 0.6].map((x) => (
+        <mesh key={x} position={[x, 0.045, 0]} castShadow>
+          <boxGeometry args={[0.22, 0.04, 0.16]} />
+          <meshStandardMaterial color="#101522" metalness={0.5} roughness={0.5} />
+        </mesh>
+      ))}
+      {/* gold pins along bottom */}
+      <mesh position={[0, -0.005, 0.13]}>
+        <boxGeometry args={[1.5, 0.008, 0.02]} />
+        <meshStandardMaterial color={GOLD} metalness={1} roughness={0.3} />
+      </mesh>
+      <mesh position={[0, -0.005, -0.13]}>
+        <boxGeometry args={[1.5, 0.008, 0.02]} />
+        <meshStandardMaterial color={GOLD} metalness={1} roughness={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
+/* ---------------- PCB traces (emissive lines) ---------------- */
+function Traces() {
+  const segs = useMemo(() => {
+    const arr: { p: [number, number, number]; s: [number, number, number] }[] = [];
+    // horizontal traces
+    for (let i = 0; i < 14; i++) {
+      const z = -1.3 + i * 0.18 + (i % 2 === 0 ? 0.02 : 0);
+      arr.push({ p: [0, 0.026, z], s: [2.6 + (i % 3) * 0.2 - 0.4, 0.002, 0.012] });
+    }
+    // vertical short stubs
+    for (let i = 0; i < 10; i++) {
+      const x = -1.2 + i * 0.26;
+      arr.push({ p: [x, 0.026, 0], s: [0.012, 0.002, 0.6 + (i % 4) * 0.1] });
+    }
+    return arr;
+  }, []);
+  return (
+    <group>
+      {segs.map((t, i) => (
+        <mesh key={i} position={t.p}>
+          <boxGeometry args={t.s} />
+          <meshStandardMaterial
+            color={ACCENT}
+            emissive={ACCENT}
+            emissiveIntensity={0.6}
+            toneMapped={false}
+            opacity={0.75}
+            transparent
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/* ---------------- Motherboard scene ---------------- */
+function Motherboard() {
+  const group = useRef<THREE.Group>(null);
+  const [scrollY, setScrollY] = useState(0);
   useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const on = () => setScrollY(window.scrollY);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
   }, []);
 
   const t = useRef(0);
@@ -82,207 +311,211 @@ function Chip() {
     if (!group.current) return;
     const max = Math.max(document.body.scrollHeight - window.innerHeight, 1);
     const p = Math.min(scrollY / max, 1);
-    const targetX = -0.45 + p * 1.5;
-    const targetY = 0.5 + p * Math.PI * 1.6;
-    const targetZ = p * 0.35;
+    const targetX = -0.55 + p * 1.4;
+    const targetY = 0.4 + p * Math.PI * 1.5;
+    const targetZ = -0.05 + p * 0.3;
     const g = group.current;
-    g.rotation.x += (targetX - g.rotation.x) * Math.min(delta * 4, 1);
-    g.rotation.y += (targetY - g.rotation.y) * Math.min(delta * 4, 1);
-    g.rotation.z += (targetZ - g.rotation.z) * Math.min(delta * 4, 1);
-    g.position.y = -p * 0.6 + Math.sin(t.current * 0.6) * 0.04;
-    g.rotation.y += delta * 0.05;
-    if (dieGlow.current) {
-      dieGlow.current.emissiveIntensity = 1.6 + Math.sin(t.current * 2.2) * 0.5;
-    }
+    g.rotation.x += (targetX - g.rotation.x) * Math.min(delta * 3.5, 1);
+    g.rotation.y += (targetY - g.rotation.y) * Math.min(delta * 3.5, 1);
+    g.rotation.z += (targetZ - g.rotation.z) * Math.min(delta * 3.5, 1);
+    g.position.y = -p * 0.5 + Math.sin(t.current * 0.6) * 0.04;
+    g.rotation.y += delta * 0.04;
   });
 
-  const bodyGeo = useBeveledBox(2.4, 0.26, 2.4, 0.05);
-  const accent = useMemo(() => new THREE.Color("#22d3ee"), []);
-  const gold = useMemo(() => new THREE.Color("#d4a85a"), []);
+  const board = useBeveledBox(3.4, 0.05, 2.4, 0.04);
 
-  /* pins around the 4 sides */
-  const pinsPerSide = 14;
-  const sideLen = 2.0;
-  const step = sideLen / pinsPerSide;
-  const half = 1.2; // body half + a bit
-  const legs: { pos: [number, number, number]; rot: [number, number, number] }[] = [];
-  for (let i = 0; i < pinsPerSide; i++) {
-    const o = -sideLen / 2 + step / 2 + i * step;
-    legs.push({ pos: [half, -0.02, o], rot: [0, 0, 0] });
-    legs.push({ pos: [-half, -0.02, o], rot: [0, Math.PI, 0] });
-    legs.push({ pos: [o, -0.02, half], rot: [0, -Math.PI / 2, 0] });
-    legs.push({ pos: [o, -0.02, -half], rot: [0, Math.PI / 2, 0] });
-  }
+  // mounting holes (cylinders cutout simulated by darker dots + screws)
+  const mounts: [number, number, number][] = [
+    [-1.55, 0.028, -1.05],
+    [1.55, 0.028, -1.05],
+    [-1.55, 0.028, 1.05],
+    [1.55, 0.028, 1.05],
+  ];
 
-  /* surface traces — radial pattern from die */
-  const traces = useMemo(() => {
-    const arr: { pos: [number, number, number]; len: number; rot: number }[] = [];
-    const rings = 10;
-    for (let i = 0; i < rings; i++) {
-      const a = (i / rings) * Math.PI * 2;
-      const len = 0.35 + (i % 3) * 0.12;
-      const r = 0.4;
-      arr.push({
-        pos: [Math.cos(a) * (r + len / 2), 0.141, Math.sin(a) * (r + len / 2)],
-        len,
-        rot: a + Math.PI / 2,
-      });
-    }
-    return arr;
-  }, []);
-
-  /* tiny SMD passives scattered on the surface */
-  const passives = useMemo(
-    () => [
-      { p: [-0.85, 0.135, -0.85], c: "#1a1a1a" },
-      { p: [0.85, 0.135, -0.85], c: "#b45309" },
-      { p: [0.85, 0.135, 0.85], c: "#1a1a1a" },
-      { p: [-0.85, 0.135, 0.85], c: "#b45309" },
-    ] as const,
-    [],
-  );
+  // QR/silkscreen squares
+  const silks: [number, number, number, number][] = [
+    [-1.3, 0.027, 0.95, 0.16],
+    [1.3, 0.027, -0.9, 0.12],
+  ];
 
   return (
     <group ref={group}>
-      {/* chip body */}
-      <mesh geometry={bodyGeo} castShadow receiveShadow>
-        <meshStandardMaterial color="#0a0d18" metalness={0.55} roughness={0.55} />
+      {/* PCB substrate */}
+      <mesh geometry={board} castShadow receiveShadow>
+        <meshStandardMaterial color={PCB_GREEN} metalness={0.25} roughness={0.75} />
+      </mesh>
+      {/* darker inner layer for depth */}
+      <mesh position={[0, 0.024, 0]}>
+        <boxGeometry args={[3.32, 0.002, 2.32]} />
+        <meshStandardMaterial color={PCB_DARK} roughness={0.9} />
       </mesh>
 
-      {/* top recessed surface (slightly inset, lighter) */}
-      <mesh position={[0, 0.135, 0]} receiveShadow>
-        <boxGeometry args={[2.18, 0.012, 2.18]} />
-        <meshStandardMaterial color="#101830" metalness={0.4} roughness={0.6} />
-      </mesh>
+      <Traces />
 
-      {/* pin-1 indicator dot */}
-      <mesh position={[-0.95, 0.143, -0.95]}>
-        <cylinderGeometry args={[0.05, 0.05, 0.004, 24]} />
-        <meshStandardMaterial color="#e5e7eb" metalness={0.3} roughness={0.4} />
-      </mesh>
+      {/* Main CPU — large QFP, glowing */}
+      <QFPChip position={[-0.3, 0.025, -0.1]} size={1.0} glow label="CPU" />
 
-      {/* silkscreen text bar (label area) */}
-      <mesh position={[0, 0.142, -0.78]}>
-        <boxGeometry args={[1.2, 0.003, 0.18]} />
-        <meshStandardMaterial color="#1c2440" metalness={0.2} roughness={0.7} />
-      </mesh>
-      {/* faux text dashes */}
-      {[-0.45, -0.25, -0.05, 0.15, 0.35].map((x) => (
-        <mesh key={x} position={[x, 0.146, -0.78]}>
-          <boxGeometry args={[0.12, 0.002, 0.025]} />
-          <meshStandardMaterial color="#9ca3af" metalness={0.1} roughness={0.8} />
-        </mesh>
-      ))}
+      {/* secondary IC */}
+      <QFPChip position={[0.9, 0.025, 0.55]} size={0.55} label="NIC" />
+      <QFPChip position={[1.05, 0.025, -0.55]} size={0.45} />
 
-      {/* radial PCB-like emissive traces */}
-      {traces.map((t, i) => (
-        <mesh key={i} position={t.pos} rotation={[0, t.rot, 0]}>
-          <boxGeometry args={[t.len, 0.003, 0.018]} />
-          <meshStandardMaterial
-            color={accent}
-            emissive={accent}
-            emissiveIntensity={1.6}
-            toneMapped={false}
-          />
-        </mesh>
-      ))}
+      {/* RAM stick standing-ish flat */}
+      <RAMStick position={[0.6, 0.045, -0.95]} />
 
-      {/* gold bond-wire ring around die */}
-      <mesh position={[0, 0.155, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.36, 0.4, 48]} />
-        <meshStandardMaterial color={gold} metalness={1} roughness={0.3} side={THREE.DoubleSide} />
-      </mesh>
+      {/* Capacitors cluster */}
+      <Capacitor position={[-1.25, 0.025, -0.2]} height={0.36} radius={0.1} color="#1e2754" />
+      <Capacitor position={[-1.25, 0.025, 0.1]} height={0.28} radius={0.085} color="#1e2754" />
+      <Capacitor position={[-1.25, 0.025, 0.4]} height={0.24} radius={0.075} color="#3a1414" />
+      <Capacitor position={[-0.95, 0.025, 0.6]} height={0.3} radius={0.085} color="#1e2754" />
 
-      {/* die cavity (dark silicon well) */}
-      <mesh position={[0, 0.148, 0]}>
-        <boxGeometry args={[0.72, 0.006, 0.72]} />
-        <meshStandardMaterial color="#070912" metalness={0.2} roughness={0.9} />
-      </mesh>
-      {/* silicon die */}
-      <mesh position={[0, 0.16, 0]} castShadow>
-        <boxGeometry args={[0.58, 0.02, 0.58]} />
-        <meshStandardMaterial color="#1d2a4d" metalness={0.6} roughness={0.35} />
-      </mesh>
-      {/* die surface — emissive grid */}
-      <mesh position={[0, 0.172, 0]}>
-        <boxGeometry args={[0.5, 0.001, 0.5]} />
-        <meshStandardMaterial
-          ref={dieGlow}
-          color={accent}
-          emissive={accent}
-          emissiveIntensity={1.8}
-          toneMapped={false}
+      {/* SMD resistors scattered */}
+      {[
+        [0.2, 0, 0.85, 0],
+        [0.35, 0, 0.85, 0],
+        [0.5, 0, 0.85, 0],
+        [-0.6, 0, -0.9, Math.PI / 2],
+        [-0.45, 0, -0.9, Math.PI / 2],
+        [1.4, 0, 0.2, Math.PI / 2],
+        [1.4, 0, 0.0, Math.PI / 2],
+        [1.4, 0, -0.2, Math.PI / 2],
+      ].map((r, i) => (
+        <Resistor
+          key={i}
+          position={[r[0], 0.025, r[2]] as [number, number, number]}
+          rotationY={r[3]}
+          color={i % 3 === 0 ? "#3a2a0a" : "#0a0d18"}
         />
+      ))}
+
+      {/* LEDs */}
+      <LED position={[-1.5, 0.025, 0.85]} color="#22d3ee" />
+      <LED position={[-1.4, 0.025, 0.85]} color="#86efac" />
+      <LED position={[-1.3, 0.025, 0.85]} color="#fca5a5" />
+
+      {/* USB / port block */}
+      <mesh position={[1.55, 0.12, 0.7]} castShadow>
+        <boxGeometry args={[0.22, 0.2, 0.45]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={1} roughness={0.3} />
       </mesh>
-      {/* die crosshatch grid (subtle) */}
-      {[-0.18, -0.06, 0.06, 0.18].map((v) => (
-        <group key={v}>
-          <mesh position={[v, 0.1735, 0]}>
-            <boxGeometry args={[0.006, 0.001, 0.5]} />
-            <meshStandardMaterial color="#0a0f1e" />
+      <mesh position={[1.46, 0.12, 0.7]}>
+        <boxGeometry args={[0.04, 0.08, 0.3]} />
+        <meshStandardMaterial color="#0a0d18" roughness={0.8} />
+      </mesh>
+
+      {/* Heatsink fins over CPU area (subtle) */}
+      <group position={[-0.3, 0.07, -0.1]}>
+        {[-0.36, -0.24, -0.12, 0, 0.12, 0.24, 0.36].map((x) => (
+          <mesh key={x} position={[x, 0.06, 0]} castShadow>
+            <boxGeometry args={[0.04, 0.12, 0.9]} />
+            <meshStandardMaterial color="#94a3b8" metalness={0.95} roughness={0.35} />
           </mesh>
-          <mesh position={[0, 0.1735, v]}>
-            <boxGeometry args={[0.5, 0.001, 0.006]} />
-            <meshStandardMaterial color="#0a0f1e" />
+        ))}
+        <mesh position={[0, 0.005, 0]}>
+          <boxGeometry args={[0.95, 0.01, 0.95]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={1} roughness={0.3} />
+        </mesh>
+      </group>
+
+      {/* mounting screws */}
+      {mounts.map((m, i) => (
+        <group key={i} position={m}>
+          <mesh>
+            <cylinderGeometry args={[0.06, 0.06, 0.012, 20]} />
+            <meshStandardMaterial color="#94a3b8" metalness={1} roughness={0.35} />
+          </mesh>
+          <mesh position={[0, 0.008, 0]}>
+            <boxGeometry args={[0.09, 0.003, 0.012]} />
+            <meshStandardMaterial color="#1f2937" />
           </mesh>
         </group>
       ))}
 
-      {/* SMD passive components on corners */}
-      {passives.map((c, i) => (
-        <mesh key={i} position={c.p as [number, number, number]} castShadow>
-          <boxGeometry args={[0.12, 0.04, 0.06]} />
-          <meshStandardMaterial color={c.c} metalness={0.4} roughness={0.5} />
+      {/* silkscreen labels */}
+      {silks.map((s, i) => (
+        <mesh key={i} position={[s[0], s[1], s[2]]}>
+          <boxGeometry args={[s[3], 0.001, s[3]]} />
+          <meshStandardMaterial color="#e5e7eb" roughness={0.95} />
         </mesh>
       ))}
-
-      {/* legs */}
-      {legs.map((l, i) => (
-        <Leg key={i} position={l.pos} rotation={l.rot} />
-      ))}
-
-      {/* PCB shadow plane underneath for grounding */}
-      <mesh position={[0, -0.13, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[2.2, 48]} />
-        <meshStandardMaterial
-          color="#0a3d2e"
-          metalness={0.2}
-          roughness={0.85}
-          transparent
-          opacity={0.55}
-        />
-      </mesh>
     </group>
   );
 }
 
+/* ---------------- Floating data particles ---------------- */
+function Particles() {
+  const ref = useRef<THREE.Points>(null);
+  const { positions, count } = useMemo(() => {
+    const c = 140;
+    const pos = new Float32Array(c * 3);
+    for (let i = 0; i < c; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 8;
+      pos[i * 3 + 1] = Math.random() * 3 - 0.5;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 6;
+    }
+    return { positions: pos, count: c };
+  }, []);
+  useFrame((_, dt) => {
+    if (!ref.current) return;
+    ref.current.rotation.y += dt * 0.02;
+  });
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          args={[positions, 3]}
+          count={count}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.025}
+        color={ACCENT}
+        transparent
+        opacity={0.55}
+        sizeAttenuation
+        depthWrite={false}
+      />
+    </points>
+  );
+}
+
+/* ---------------- Background ---------------- */
 export function ChipBackground() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 -z-10 opacity-80 [mask-image:radial-gradient(ellipse_at_center,black_55%,transparent_88%)]"
+      className="pointer-events-none fixed inset-0 -z-10 opacity-90 [mask-image:radial-gradient(ellipse_at_center,black_55%,transparent_90%)]"
     >
       <Canvas
-        camera={{ position: [0, 1.8, 4.6], fov: 38 }}
+        camera={{ position: [0.4, 2.1, 5.0], fov: 36 }}
         dpr={[1, 2]}
         shadows
         gl={{ antialias: true, alpha: true }}
       >
-        <color attach="background" args={["#070b16"]} />
-        <fog attach="fog" args={["#070b16", 5.5, 11]} />
-        <ambientLight intensity={0.25} />
+        <color attach="background" args={["#060912"]} />
+        <fog attach="fog" args={["#060912", 6, 13]} />
+        <ambientLight intensity={0.32} />
         <directionalLight
-          position={[3.5, 5, 2]}
-          intensity={1.4}
-          color="#cffafe"
+          position={[4, 6, 3]}
+          intensity={1.5}
+          color="#e0f7ff"
           castShadow
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
         />
-        <pointLight position={[-3, 2, -2]} intensity={1.4} color="#22d3ee" />
-        <pointLight position={[0, 0.5, 0]} intensity={0.6} color="#22d3ee" distance={3} />
+        <pointLight position={[-3.5, 2, -2]} intensity={1.6} color="#22d3ee" />
+        <pointLight position={[2.5, 1.2, 2]} intensity={0.9} color="#7dd3fc" />
         <Environment preset="city" />
-        <Chip />
+        <Motherboard />
+        <Particles />
+        <ContactShadows
+          position={[0, -0.65, 0]}
+          opacity={0.55}
+          scale={9}
+          blur={2.4}
+          far={3}
+          color="#000000"
+        />
       </Canvas>
     </div>
   );

@@ -171,7 +171,13 @@ function Capacitor({
     <group position={position}>
       <mesh position={[0, height / 2, 0]} castShadow>
         <cylinderGeometry args={[radius, radius, height, 28]} />
-        <meshStandardMaterial color={color} metalness={0.65} roughness={0.35} />
+        <meshPhysicalMaterial
+          color={color}
+          metalness={0.85}
+          roughness={0.28}
+          clearcoat={0.7}
+          clearcoatRoughness={0.25}
+        />
       </mesh>
       {/* top cross indent */}
       <mesh position={[0, height + 0.002, 0]}>

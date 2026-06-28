@@ -494,12 +494,14 @@ function Goals() {
       <div className="mx-auto max-w-6xl px-6">
         <SectionHeader num="06" eyebrow="Trajectory" title="Future goals" />
         <div className="grid gap-px overflow-hidden rounded-sm border border-rule bg-rule md:grid-cols-3">
-          {goals.map((g) => (
-            <div key={g.n} className="bg-background p-7">
-              <p className="font-mono text-xs text-accent">{g.n}</p>
-              <h3 className="mt-3 font-serif text-xl">{g.t}</h3>
-              <p className="mt-3 text-sm text-muted-foreground">{g.d}</p>
-            </div>
+          {goals.map((g, i) => (
+            <Reveal key={g.n} delay={i * 140}>
+              <div className="bg-background p-7 transition duration-500 hover:bg-surface">
+                <p className="font-mono text-xs text-accent">{g.n}</p>
+                <h3 className="mt-3 font-serif text-xl">{g.t}</h3>
+                <p className="mt-3 text-sm text-muted-foreground">{g.d}</p>
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>

@@ -1,9 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useState } from "react";
-
-const ChipBackground = lazy(() =>
-  import("@/components/ChipBackground").then((m) => ({ default: m.ChipBackground })),
-);
+import { useEffect, useRef, useState, type ReactNode, type ElementType } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,16 +23,41 @@ const NAV = [
   { id: "contact", label: "Contact" },
 ];
 
+function Reveal({ children, delay = 0, as, className = "" }: { children: ReactNode; delay?: number; as?: ElementType; className?: string }) {
+  const Tag: ElementType = as ?? "div";
+  const ref = useRef<HTMLElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            setVisible(true);
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <Tag
+      ref={ref as never}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`reveal ${visible ? "reveal-in" : ""} ${className}`}
+    >
+      {children}
+    </Tag>
+  );
+}
+
 function Home() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
   return (
     <div className="relative min-h-screen text-foreground">
-      {mounted && (
-        <Suspense fallback={null}>
-          <ChipBackground />
-        </Suspense>
-      )}
       <Header />
       <main className="relative">
         <Hero />

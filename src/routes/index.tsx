@@ -464,16 +464,18 @@ function Experience() {
       <div className="mx-auto max-w-6xl px-6">
         <SectionHeader num="05" eyebrow="Activities" title="Experience" />
         <ol className="relative space-y-10 border-l border-rule pl-8">
-          {items.map((it) => (
-            <li key={it.role} className="relative">
-              <span className="absolute -left-[34px] top-1.5 h-3 w-3 rounded-full border border-rule bg-background" />
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className="font-serif text-xl">{it.role}</h3>
-                <span className="font-mono text-xs text-muted-foreground">{it.time}</span>
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">{it.org}</p>
-              <p className="mt-3 max-w-2xl text-sm text-foreground/90">{it.body}</p>
-            </li>
+          {items.map((it, i) => (
+            <Reveal key={it.role} delay={i * 120}>
+              <li className="relative">
+                <span className="absolute -left-[34px] top-1.5 h-3 w-3 rounded-full border border-rule bg-background" />
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h3 className="font-serif text-xl">{it.role}</h3>
+                  <span className="font-mono text-xs text-muted-foreground">{it.time}</span>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">{it.org}</p>
+                <p className="mt-3 max-w-2xl text-sm text-foreground/90">{it.body}</p>
+              </li>
+            </Reveal>
           ))}
         </ol>
       </div>

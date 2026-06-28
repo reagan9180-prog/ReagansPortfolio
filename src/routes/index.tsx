@@ -23,9 +23,8 @@ const NAV = [
   { id: "contact", label: "Contact" },
 ];
 
-function Reveal({ children, delay = 0, as, className = "" }: { children: ReactNode; delay?: number; as?: ElementType; className?: string }) {
-  const Tag: ElementType = as ?? "div";
-  const ref = useRef<HTMLElement>(null);
+function Reveal({ children, delay = 0, className = "" }: { children: ReactNode; delay?: number; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
@@ -45,13 +44,13 @@ function Reveal({ children, delay = 0, as, className = "" }: { children: ReactNo
     return () => io.disconnect();
   }, []);
   return (
-    <Tag
-      ref={ref as never}
+    <div
+      ref={ref}
       style={{ transitionDelay: `${delay}ms` }}
       className={`reveal ${visible ? "reveal-in" : ""} ${className}`}
     >
       {children}
-    </Tag>
+    </div>
   );
 }
 

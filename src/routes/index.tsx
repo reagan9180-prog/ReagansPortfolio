@@ -336,18 +336,20 @@ function Skills() {
       <div className="mx-auto max-w-6xl px-6">
         <SectionHeader num="03" eyebrow="Toolkit" title="Skills" />
         <div className="grid gap-px overflow-hidden rounded-sm border border-rule bg-rule sm:grid-cols-3">
-          {groups.map((g) => (
-            <div key={g.label} className="bg-background p-6">
-              <p className="eyebrow">{g.label}</p>
-              <ul className="mt-4 space-y-2">
-                {g.items.map((i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm">
-                    <span className="font-mono text-xs text-muted-foreground">›</span>
-                    {i}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {groups.map((g, gi) => (
+            <Reveal key={g.label} delay={gi * 120}>
+              <div className="bg-background p-6 transition duration-500 hover:bg-surface">
+                <p className="eyebrow">{g.label}</p>
+                <ul className="mt-4 space-y-2">
+                  {g.items.map((i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm">
+                      <span className="font-mono text-xs text-accent">›</span>
+                      {i}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>

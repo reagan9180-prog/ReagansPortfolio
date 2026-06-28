@@ -1,9 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useState } from "react";
-
-const ChipBackground = lazy(() =>
-  import("@/components/ChipBackground").then((m) => ({ default: m.ChipBackground })),
-);
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,16 +23,40 @@ const NAV = [
   { id: "contact", label: "Contact" },
 ];
 
+function Reveal({ children, delay = 0, className = "" }: { children: ReactNode; delay?: number; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            setVisible(true);
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`reveal ${visible ? "reveal-in" : ""} ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
 function Home() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
   return (
     <div className="relative min-h-screen text-foreground">
-      {mounted && (
-        <Suspense fallback={null}>
-          <ChipBackground />
-        </Suspense>
-      )}
       <Header />
       <main className="relative">
         <Hero />
@@ -141,7 +161,7 @@ function Hero() {
         <p className="eyebrow animate-fade-up">TUM Applicant · Information Engineering · Class of 2027</p>
         <h1 className="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl animate-fade-up">
           Aspiring Information<br />
-          <span className="text-accent text-glow">Engineer.</span>
+          <span className="text-sheen text-glow">Engineer.</span>
         </h1>
         <p className="mt-6 max-w-2xl text-base text-muted-foreground md:text-lg animate-fade-up">
           A Grade 12 student from Indonesia building software, learning systems, and
@@ -182,13 +202,15 @@ function Hero() {
 
 function SectionHeader({ num, eyebrow, title }: { num: string; eyebrow: string; title: string }) {
   return (
-    <div className="mb-12 flex items-end justify-between border-b border-rule pb-4">
-      <div>
-        <p className="eyebrow">{eyebrow}</p>
-        <h2 className="mt-2 font-serif text-3xl md:text-4xl">{title}</h2>
+    <Reveal>
+      <div className="mb-12 flex items-end justify-between border-b border-rule pb-4">
+        <div>
+          <p className="eyebrow">{eyebrow}</p>
+          <h2 className="mt-2 font-serif text-3xl md:text-4xl">{title}</h2>
+        </div>
+        <span className="font-mono text-xs text-muted-foreground">§ {num}</span>
       </div>
-      <span className="font-mono text-xs text-muted-foreground">§ {num}</span>
-    </div>
+    </Reveal>
   );
 }
 
@@ -314,18 +336,20 @@ function Skills() {
       <div className="mx-auto max-w-6xl px-6">
         <SectionHeader num="03" eyebrow="Toolkit" title="Skills" />
         <div className="grid gap-px overflow-hidden rounded-sm border border-rule bg-rule sm:grid-cols-3">
-          {groups.map((g) => (
-            <div key={g.label} className="bg-background p-6">
-              <p className="eyebrow">{g.label}</p>
-              <ul className="mt-4 space-y-2">
-                {g.items.map((i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm">
-                    <span className="font-mono text-xs text-muted-foreground">›</span>
-                    {i}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {groups.map((g, gi) => (
+            <Reveal key={g.label} delay={gi * 120}>
+              <div className="bg-background p-6 transition duration-500 hover:bg-surface">
+                <p className="eyebrow">{g.label}</p>
+                <ul className="mt-4 space-y-2">
+                  {g.items.map((i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm">
+                      <span className="font-mono text-xs text-accent">›</span>
+                      {i}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -378,36 +402,37 @@ function Projects() {
         <SectionHeader num="04" eyebrow="Selected work" title="Projects" />
         <div className="grid gap-6 md:grid-cols-2">
           {PROJECTS.map((p, i) => (
-            <article
-              key={p.title}
-              className="group flex flex-col overflow-hidden rounded-sm border border-rule bg-background transition hover:border-foreground/40"
-            >
-              <div className="relative aspect-[16/9] overflow-hidden border-b border-rule bg-surface grid-bg">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="rounded-sm border border-rule bg-background/80 px-3 py-1 font-mono text-[11px] text-muted-foreground backdrop-blur">
-                    PROJECT_{String(i + 1).padStart(2, "0")}.PNG
+            <Reveal key={p.title} delay={i * 110}>
+              <article
+                className="group flex flex-col overflow-hidden rounded-sm border border-rule bg-background transition duration-500 hover:-translate-y-1 hover:border-accent/60 hover:shadow-[0_20px_60px_-20px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
+              >
+                <div className="relative aspect-[16/9] overflow-hidden border-b border-rule bg-surface grid-bg">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="rounded-sm border border-rule bg-background/80 px-3 py-1 font-mono text-[11px] text-muted-foreground backdrop-blur">
+                      PROJECT_{String(i + 1).padStart(2, "0")}.PNG
+                    </div>
+                  </div>
+                  <span className="absolute right-3 top-3 rounded-sm border border-rule bg-background px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {p.status}
+                  </span>
+                </div>
+                <div className="flex flex-1 flex-col p-6">
+                  <h3 className="font-serif text-xl">{p.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{p.summary}</p>
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {p.tech.map((t) => (
+                      <span key={t} className="rounded-sm border border-rule px-2 py-0.5 font-mono text-[11px] text-foreground/80">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-5 border-t border-rule pt-4">
+                    <p className="eyebrow">What I learned</p>
+                    <p className="mt-2 text-sm text-foreground/90">{p.learned}</p>
                   </div>
                 </div>
-                <span className="absolute right-3 top-3 rounded-sm border border-rule bg-background px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                  {p.status}
-                </span>
-              </div>
-              <div className="flex flex-1 flex-col p-6">
-                <h3 className="font-serif text-xl">{p.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{p.summary}</p>
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {p.tech.map((t) => (
-                    <span key={t} className="rounded-sm border border-rule px-2 py-0.5 font-mono text-[11px] text-foreground/80">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-                <div className="mt-5 border-t border-rule pt-4">
-                  <p className="eyebrow">What I learned</p>
-                  <p className="mt-2 text-sm text-foreground/90">{p.learned}</p>
-                </div>
-              </div>
-            </article>
+              </article>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -441,16 +466,18 @@ function Experience() {
       <div className="mx-auto max-w-6xl px-6">
         <SectionHeader num="05" eyebrow="Activities" title="Experience" />
         <ol className="relative space-y-10 border-l border-rule pl-8">
-          {items.map((it) => (
-            <li key={it.role} className="relative">
-              <span className="absolute -left-[34px] top-1.5 h-3 w-3 rounded-full border border-rule bg-background" />
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className="font-serif text-xl">{it.role}</h3>
-                <span className="font-mono text-xs text-muted-foreground">{it.time}</span>
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">{it.org}</p>
-              <p className="mt-3 max-w-2xl text-sm text-foreground/90">{it.body}</p>
-            </li>
+          {items.map((it, i) => (
+            <Reveal key={it.role} delay={i * 120}>
+              <li className="relative">
+                <span className="absolute -left-[34px] top-1.5 h-3 w-3 rounded-full border border-rule bg-background" />
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h3 className="font-serif text-xl">{it.role}</h3>
+                  <span className="font-mono text-xs text-muted-foreground">{it.time}</span>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">{it.org}</p>
+                <p className="mt-3 max-w-2xl text-sm text-foreground/90">{it.body}</p>
+              </li>
+            </Reveal>
           ))}
         </ol>
       </div>
@@ -469,12 +496,14 @@ function Goals() {
       <div className="mx-auto max-w-6xl px-6">
         <SectionHeader num="06" eyebrow="Trajectory" title="Future goals" />
         <div className="grid gap-px overflow-hidden rounded-sm border border-rule bg-rule md:grid-cols-3">
-          {goals.map((g) => (
-            <div key={g.n} className="bg-background p-7">
-              <p className="font-mono text-xs text-accent">{g.n}</p>
-              <h3 className="mt-3 font-serif text-xl">{g.t}</h3>
-              <p className="mt-3 text-sm text-muted-foreground">{g.d}</p>
-            </div>
+          {goals.map((g, i) => (
+            <Reveal key={g.n} delay={i * 140}>
+              <div className="bg-background p-7 transition duration-500 hover:bg-surface">
+                <p className="font-mono text-xs text-accent">{g.n}</p>
+                <h3 className="mt-3 font-serif text-xl">{g.t}</h3>
+                <p className="mt-3 text-sm text-muted-foreground">{g.d}</p>
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>

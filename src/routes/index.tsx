@@ -161,7 +161,7 @@ function Hero() {
         <p className="eyebrow animate-fade-up">TUM Applicant · Information Engineering · Class of 2027</p>
         <h1 className="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl animate-fade-up">
           Aspiring Information<br />
-          <span className="text-accent text-glow">Engineer.</span>
+          <span className="text-sheen text-glow">Engineer.</span>
         </h1>
         <p className="mt-6 max-w-2xl text-base text-muted-foreground md:text-lg animate-fade-up">
           A Grade 12 student from Indonesia building software, learning systems, and

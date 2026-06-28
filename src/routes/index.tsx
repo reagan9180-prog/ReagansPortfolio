@@ -182,19 +182,22 @@ function Hero() {
             Contact
           </a>
         </div>
-        <dl className="mt-16 grid max-w-2xl grid-cols-2 gap-x-8 gap-y-6 border-t border-rule pt-8 sm:grid-cols-4">
-          {[
-            { k: "Location", v: "Jakarta, ID" },
-            { k: "Target", v: "TUM Munich" },
-            { k: "Field", v: "Info. Eng." },
-            { k: "Languages", v: "EN · DE A1" },
-          ].map((s) => (
-            <div key={s.k}>
-              <dt className="eyebrow">{s.k}</dt>
-              <dd className="mt-1 font-mono text-sm">{s.v}</dd>
-            </div>
-          ))}
-        </dl>
+        <div className="mt-16 border-t border-rule pt-8">
+          <div className="mb-4 h-px w-full data-stream opacity-70" aria-hidden />
+          <dl className="grid max-w-2xl grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
+            {[
+              { k: "Location", v: "Jakarta, ID" },
+              { k: "Target", v: "TUM Munich" },
+              { k: "Field", v: "Info. Eng." },
+              { k: "Languages", v: "EN · DE A1" },
+            ].map((s) => (
+              <div key={s.k} className="corner-brackets px-2 py-1">
+                <dt className="eyebrow">{s.k}</dt>
+                <dd className="mt-1 font-mono text-sm flicker">{s.v}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
     </section>
   );

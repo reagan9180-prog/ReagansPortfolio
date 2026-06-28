@@ -158,9 +158,9 @@ function Hero() {
     <section id="top" className="relative overflow-hidden border-b border-rule">
       <div className="absolute inset-0 grid-bg opacity-60" aria-hidden />
       <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-20 md:pb-32 md:pt-28">
-        <p className="eyebrow animate-fade-up">TUM Applicant · Information Engineering · Class of 2027</p>
+        <p className="eyebrow caret animate-fade-up">TUM Applicant · Information Engineering · Class of 2027</p>
         <h1 className="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl animate-fade-up">
-          Aspiring Information<br />
+          <span className="glitch" data-text="Aspiring Information">Aspiring Information</span><br />
           <span className="text-sheen text-glow">Engineer.</span>
         </h1>
         <p className="mt-6 max-w-2xl text-base text-muted-foreground md:text-lg animate-fade-up">
@@ -182,19 +182,22 @@ function Hero() {
             Contact
           </a>
         </div>
-        <dl className="mt-16 grid max-w-2xl grid-cols-2 gap-x-8 gap-y-6 border-t border-rule pt-8 sm:grid-cols-4">
-          {[
-            { k: "Location", v: "Jakarta, ID" },
-            { k: "Target", v: "TUM Munich" },
-            { k: "Field", v: "Info. Eng." },
-            { k: "Languages", v: "EN · DE A1" },
-          ].map((s) => (
-            <div key={s.k}>
-              <dt className="eyebrow">{s.k}</dt>
-              <dd className="mt-1 font-mono text-sm">{s.v}</dd>
-            </div>
-          ))}
-        </dl>
+        <div className="mt-16 border-t border-rule pt-8">
+          <div className="mb-4 h-px w-full data-stream opacity-70" aria-hidden />
+          <dl className="grid max-w-2xl grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
+            {[
+              { k: "Location", v: "Jakarta, ID" },
+              { k: "Target", v: "TUM Munich" },
+              { k: "Field", v: "Info. Eng." },
+              { k: "Languages", v: "EN · DE A1" },
+            ].map((s) => (
+              <div key={s.k} className="corner-brackets px-2 py-1">
+                <dt className="eyebrow">{s.k}</dt>
+                <dd className="mt-1 font-mono text-sm flicker">{s.v}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
     </section>
   );
@@ -203,10 +206,10 @@ function Hero() {
 function SectionHeader({ num, eyebrow, title }: { num: string; eyebrow: string; title: string }) {
   return (
     <Reveal>
-      <div className="mb-12 flex items-end justify-between border-b border-rule pb-4">
+      <div className="mb-12 flex items-end justify-between border-b border-rule pb-4 hud-frame">
         <div>
           <p className="eyebrow">{eyebrow}</p>
-          <h2 className="mt-2 font-serif text-3xl md:text-4xl">{title}</h2>
+          <h2 className="mt-2 font-serif text-3xl md:text-4xl glitch" data-text={title}>{title}</h2>
         </div>
         <span className="font-mono text-xs text-muted-foreground">§ {num}</span>
       </div>

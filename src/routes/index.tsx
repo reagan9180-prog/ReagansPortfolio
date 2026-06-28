@@ -206,10 +206,10 @@ function Hero() {
 function SectionHeader({ num, eyebrow, title }: { num: string; eyebrow: string; title: string }) {
   return (
     <Reveal>
-      <div className="mb-12 flex items-end justify-between border-b border-rule pb-4">
+      <div className="mb-12 flex items-end justify-between border-b border-rule pb-4 hud-frame">
         <div>
           <p className="eyebrow">{eyebrow}</p>
-          <h2 className="mt-2 font-serif text-3xl md:text-4xl">{title}</h2>
+          <h2 className="mt-2 font-serif text-3xl md:text-4xl glitch" data-text={title}>{title}</h2>
         </div>
         <span className="font-mono text-xs text-muted-foreground">§ {num}</span>
       </div>

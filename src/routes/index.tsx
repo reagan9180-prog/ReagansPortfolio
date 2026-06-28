@@ -202,13 +202,15 @@ function Hero() {
 
 function SectionHeader({ num, eyebrow, title }: { num: string; eyebrow: string; title: string }) {
   return (
-    <div className="mb-12 flex items-end justify-between border-b border-rule pb-4">
-      <div>
-        <p className="eyebrow">{eyebrow}</p>
-        <h2 className="mt-2 font-serif text-3xl md:text-4xl">{title}</h2>
+    <Reveal>
+      <div className="mb-12 flex items-end justify-between border-b border-rule pb-4">
+        <div>
+          <p className="eyebrow">{eyebrow}</p>
+          <h2 className="mt-2 font-serif text-3xl md:text-4xl">{title}</h2>
+        </div>
+        <span className="font-mono text-xs text-muted-foreground">§ {num}</span>
       </div>
-      <span className="font-mono text-xs text-muted-foreground">§ {num}</span>
-    </div>
+    </Reveal>
   );
 }
 

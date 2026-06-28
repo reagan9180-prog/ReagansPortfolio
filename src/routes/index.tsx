@@ -400,36 +400,37 @@ function Projects() {
         <SectionHeader num="04" eyebrow="Selected work" title="Projects" />
         <div className="grid gap-6 md:grid-cols-2">
           {PROJECTS.map((p, i) => (
-            <article
-              key={p.title}
-              className="group flex flex-col overflow-hidden rounded-sm border border-rule bg-background transition hover:border-foreground/40"
-            >
-              <div className="relative aspect-[16/9] overflow-hidden border-b border-rule bg-surface grid-bg">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="rounded-sm border border-rule bg-background/80 px-3 py-1 font-mono text-[11px] text-muted-foreground backdrop-blur">
-                    PROJECT_{String(i + 1).padStart(2, "0")}.PNG
+            <Reveal key={p.title} delay={i * 110}>
+              <article
+                className="group flex flex-col overflow-hidden rounded-sm border border-rule bg-background transition duration-500 hover:-translate-y-1 hover:border-accent/60 hover:shadow-[0_20px_60px_-20px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
+              >
+                <div className="relative aspect-[16/9] overflow-hidden border-b border-rule bg-surface grid-bg">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="rounded-sm border border-rule bg-background/80 px-3 py-1 font-mono text-[11px] text-muted-foreground backdrop-blur">
+                      PROJECT_{String(i + 1).padStart(2, "0")}.PNG
+                    </div>
+                  </div>
+                  <span className="absolute right-3 top-3 rounded-sm border border-rule bg-background px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {p.status}
+                  </span>
+                </div>
+                <div className="flex flex-1 flex-col p-6">
+                  <h3 className="font-serif text-xl">{p.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{p.summary}</p>
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {p.tech.map((t) => (
+                      <span key={t} className="rounded-sm border border-rule px-2 py-0.5 font-mono text-[11px] text-foreground/80">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-5 border-t border-rule pt-4">
+                    <p className="eyebrow">What I learned</p>
+                    <p className="mt-2 text-sm text-foreground/90">{p.learned}</p>
                   </div>
                 </div>
-                <span className="absolute right-3 top-3 rounded-sm border border-rule bg-background px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                  {p.status}
-                </span>
-              </div>
-              <div className="flex flex-1 flex-col p-6">
-                <h3 className="font-serif text-xl">{p.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{p.summary}</p>
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {p.tech.map((t) => (
-                    <span key={t} className="rounded-sm border border-rule px-2 py-0.5 font-mono text-[11px] text-foreground/80">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-                <div className="mt-5 border-t border-rule pt-4">
-                  <p className="eyebrow">What I learned</p>
-                  <p className="mt-2 text-sm text-foreground/90">{p.learned}</p>
-                </div>
-              </div>
-            </article>
+              </article>
+            </Reveal>
           ))}
         </div>
       </div>
